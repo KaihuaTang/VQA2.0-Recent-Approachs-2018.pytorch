@@ -4,5 +4,3 @@ __pycache__
 val_acc.png
 results.json
 vocab.json
-logs
-data
