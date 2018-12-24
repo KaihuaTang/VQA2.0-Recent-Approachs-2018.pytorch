@@ -1,10 +1,10 @@
 # paths
-qa_path = '/home/kaihua/projects/vqa-counting/vqa-v2/data'  # directory containing the question and annotation jsons
-bottom_up_trainval_path = '/home/kaihua/projects/vqa-counting/vqa-v2/data/trainval'  # directory containing the .tsv file(s) with bottom up features
-bottom_up_test_path = '/home/kaihua/projects/vqa-counting/vqa-v2/data/test2015'  # directory containing the .tsv file(s) with bottom up features
-preprocessed_trainval_path = '/home/kaihua/projects/vqa-counting/vqa-v2/genome-trainval.h5'  # path where preprocessed features from the trainval split are saved to and loaded from
-preprocessed_test_path = '/home/kaihua/projects/vqa-counting/vqa-v2/genome-test.h5'  # path where preprocessed features from the test split are saved to and loaded from
-vocabulary_path = '/home/kaihua/projects/vqa-counting/vqa-v2/vocab.json'  # path where the used vocabularies for question and answers are saved to
+qa_path = 'data'  # directory containing the question and annotation jsons
+bottom_up_trainval_path = 'data/trainval'  # directory containing the .tsv file(s) with bottom up features
+bottom_up_test_path = 'data/test2015'  # directory containing the .tsv file(s) with bottom up features
+preprocessed_trainval_path = 'genome-trainval.h5'  # path where preprocessed features from the trainval split are saved to and loaded from
+preprocessed_test_path = 'genome-test.h5'  # path where preprocessed features from the test split are saved to and loaded from
+vocabulary_path = 'vocab.json'  # path where the used vocabularies for question and answers are saved to
 
 task = 'OpenEnded'
 dataset = 'mscoco'
