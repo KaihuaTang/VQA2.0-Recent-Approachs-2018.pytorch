@@ -117,7 +117,7 @@ class Classifier(nn.Sequential):
         super(Classifier, self).__init__()
         self.drop = nn.Dropout(drop)
         self.relu = nn.ReLU()
-        self.fusion = Fusion()
+        #self.fusion = Fusion()
         self.lin1 = nn.Linear(in_features, mid_features)
         self.lin2 = nn.Linear(mid_features, out_features)
         self.bn = nn.BatchNorm1d(mid_features)
@@ -131,7 +131,7 @@ class Classifier(nn.Sequential):
         """
         v_mean = (v * v_mask.unsqueeze(2)).sum(1) / v_mask.sum(1).unsqueeze(1)
         q_mean = (q * q_mask.unsqueeze(2)).sum(1) / q_mask.sum(1).unsqueeze(1)
-        out = self.lin1(self.drop(self.fusion(v_mean, q_mean)))
+        out = self.lin1(self.drop(v_mean * q_mean))
         out = self.lin2(self.drop(self.relu(self.bn(out))))
         return out
 
