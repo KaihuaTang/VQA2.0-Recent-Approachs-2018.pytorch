@@ -56,23 +56,23 @@ class Net(nn.Module):
 
     def forward(self, v, b, q, v_mask, q_mask, q_len):
         """
-        input V: [batch, 2048, 1, 36]
-        input B: [batch, 4, 36]
-        input Q: [batch, 23]
+        input V: [batch, 2048, num_obj]
+        input B: [batch, 4, num_obj]
+        input Q: [batch, max_len]
         input Q len: [batch]
         """
         # question embedding
         q = self.text(q, list(q_len.data)) # [batch, 1024]
         # normalized visual feature
-        v = v.unsqueeze(2)
-        v = v / (v.norm(p=2, dim=1, keepdim=True) + 1e-12).expand_as(v) # [batch, 2048, 1, 36]
+        v = v.unsqueeze(2) # [batch, 2048, 1, num_obj]
+        v = v / (v.norm(p=2, dim=1, keepdim=True) + 1e-12).expand_as(v) # [batch, 2048, 1, num_obj]
         # attention
-        a = self.attention(v, q) # [batch, num_glimpse, 1, 36]
+        a = self.attention(v, q) # [batch, num_glimpse, 1, num_obj]
         v = apply_attention(v, a) # [batch, 4096]
 
         # this is where the counting component is used
         # pick out the first attention map
-        a1 = a[:, 0, :, :].contiguous().view(a.size(0), -1) # [batch, 36]
+        a1 = a[:, 0, :, :].contiguous().view(a.size(0), -1) # [batch, num_obj]
         # give it and the bounding boxes to the component
         count = self.counter(b, a1) # [batch, 11]
 
