@@ -41,6 +41,7 @@ To Train [Counting Model][5]
 
 Set following parameters in config.py:
 ```
+v_feat_norm = True
 initial_lr = 1.5e-3
 model_type = 'counting'
 optim_method = 'Adam'
