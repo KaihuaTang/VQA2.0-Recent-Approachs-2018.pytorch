@@ -1,6 +1,6 @@
 # Several Recent Approaches (2018) on VQA v2
 
-The project is based on [Cyanogenoid/vqa-counting][0]. Most of the current VQA2.0 projects are based on [https://github.com/KaihuaTang/bottom-up-attention-vqa][1], while I personally prefer the Cyanogenoid's framework, because it's very clear. So I reimplement several recent approaches including [bottom-up top-down][2], [bilinear attention network][3], [Intra- and Inter-modality Attention][4] together with [learning to count][5] into this project.  
+The project is based on [Cyanogenoid/vqa-counting][0]. Most of the current VQA2.0 projects are based on [https://github.com/KaihuaTang/bottom-up-attention-vqa][1], while I personally prefer the Cyanogenoid's framework, because it's very clean and clear. So I reimplement several recent approaches including [bottom-up top-down][2], [bilinear attention network][3], [Intra- and Inter-modality Attention][4] together with [learning to count][5] into this project.  
 
 
 ## Dependencies
