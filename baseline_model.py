@@ -1,6 +1,6 @@
 ##########################
-# Implementation of Dynamic Fusion with Intra- and Inter-modality Attention Flow for Visual Question Answering (DFAF)
-# Paper Link: https://arxiv.org/abs/1812.05252
+# Implementation of Bottom-Up and Top-Down Attention for Image Captioning and Visual Question Answering
+# Paper Link: https://arxiv.org/abs/1707.07998
 # Code Author: Kaihua Tang
 # Environment: Python 3.6, Pytorch 1.0
 ##########################
