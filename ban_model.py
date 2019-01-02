@@ -1,6 +1,6 @@
 ##########################
-# Implementation of Dynamic Fusion with Intra- and Inter-modality Attention Flow for Visual Question Answering (DFAF)
-# Paper Link: https://arxiv.org/abs/1812.05252
+# Implementation of Bilinear Attention Networks
+# Paper Link: https://arxiv.org/abs/1805.07932
 # Code Author: Kaihua Tang
 # Environment: Python 3.6, Pytorch 1.0
 ##########################
