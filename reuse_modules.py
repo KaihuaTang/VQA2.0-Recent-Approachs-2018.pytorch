@@ -1,9 +1,4 @@
-##########################
-# Implementation of Dynamic Fusion with Intra- and Inter-modality Attention Flow for Visual Question Answering (DFAF)
-# Paper Link: https://arxiv.org/abs/1812.05252
-# Code Author: Kaihua Tang
-# Environment: Python 3.6, Pytorch 1.0
-##########################
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
