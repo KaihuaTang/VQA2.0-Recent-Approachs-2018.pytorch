@@ -26,6 +26,8 @@ answer_list = a_json['annotations']
 categories = [a['answer_type'] for a in answer_list]  # {'yes/no', 'other', 'number'}
 accept_condition = {
     'number': (lambda x: id_to_cat[x] == 'number'),
+    'yes/no': (lambda x: id_to_cat[x] == 'yes/no'),
+    'other': (lambda x: id_to_cat[x] == 'other'),
     'count': (lambda x: id_to_question[x].lower().startswith('how many')),
     'all': (lambda x: True),
 }

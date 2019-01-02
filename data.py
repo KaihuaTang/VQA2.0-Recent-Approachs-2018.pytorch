@@ -85,7 +85,8 @@ class VQA(data.Dataset):
     @property
     def max_question_length(self):
         if not hasattr(self, '_max_length'):
-            self._max_length = max(map(len, self.questions))
+            data_max_length = max(map(len, self.questions))
+            self._max_length = min(config.max_q_length, data_max_length)
         return self._max_length
 
     @property
@@ -125,9 +126,11 @@ class VQA(data.Dataset):
         """ Turn a question into a vector of indices and a question length """
         vec = torch.zeros(self.max_question_length).long()
         for i, token in enumerate(question):
+            if i >= self.max_question_length:
+                break
             index = self.token_to_index.get(token, 0)
             vec[i] = index
-        return vec, len(question)
+        return vec, min(len(question), self.max_question_length)
 
     def _encode_answers(self, answers):
         """ Turn an answer into a vector """
@@ -158,7 +161,7 @@ class VQA(data.Dataset):
         if self.answerable_only:
             item = self.answerable[item]
         q, q_length = self.questions[item]
-        q_mask = torch.from_numpy((np.arange(self._max_length) < q_length).astype(int))
+        q_mask = torch.from_numpy((np.arange(self.max_question_length) < q_length).astype(int))
         if not self.dummy_answers:
             a = self.answers[item]
         else:
@@ -169,7 +172,7 @@ class VQA(data.Dataset):
         # since batches are re-ordered for PackedSequence's, the original question order is lost
         # we return `item` so that the order of (v, q, a) triples can be restored if desired
         # without shuffling in the dataloader, these will be in the order that they appear in the q and a json's.
-        return v, q, a, b, item, obj_mask, q_mask, q_length
+        return v, q, a, b, item, obj_mask.float(), q_mask.float(), q_length
 
     def __len__(self):
         if self.answerable_only:

@@ -13,27 +13,41 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.init as init
+from torch.autograd import Variable
+from torch.nn.utils.rnn import pack_padded_sequence
 
+import config
 from config import qa_path
 
 class TextProcessor(nn.Module):
-    def __init__(self, classes, embedding_features, lstm_features, drop=0.0):
+    def __init__(self, classes, embedding_features, lstm_features, drop=0.0, use_hidden=True):
         super(TextProcessor, self).__init__()
+        self.use_hidden = use_hidden
+        classes = list(classes)
+        classes.insert(0, '__unknown__')
+
         embed_vecs = obj_edge_vectors(classes, wv_dim=embedding_features)
         self.embed = nn.Embedding(len(classes), embedding_features)
         self.embed.weight.data = embed_vecs.clone()
-
+        
+        self.tanh = nn.Tanh()
         self.drop = nn.Dropout(drop)
         self.lstm = nn.GRU(input_size=embedding_features,
                            hidden_size=lstm_features,
                            num_layers=1,
-                           batch_first=True,)
+                           batch_first=not use_hidden,)
 
-    def forward(self, q):
+    def forward(self, q, q_len):
         embedded = self.embed(q)
-        tanhed = self.drop(embedded)
-        out, _ = self.lstm(tanhed)
-        return out
+        dropped = self.tanh(self.drop(embedded))
+        self.lstm.flatten_parameters()
+        if self.use_hidden:
+            packed = pack_padded_sequence(dropped, q_len, batch_first=True)
+            _, hid = self.lstm(packed)
+            return hid.squeeze(0)
+        else:
+            out, _ = self.lstm(dropped)
+            return out
 
 
 
@@ -44,22 +58,21 @@ def obj_edge_vectors(names, wv_type='glove.6B', wv_dir=qa_path, wv_dim=300):
     vectors.normal_(0,1)
     failed_token = []
     for i, token in enumerate(names):
-        wv_index = wv_dict.get(token, 0)
-        if wv_index != 0:
+        wv_index = wv_dict.get(token, None)
+        if wv_index is not None:
             vectors[i] = wv_arr[wv_index]
         else:
             # Try the longest word (hopefully won't be a preposition
             lw_token = sorted(token.split(' '), key=lambda x: len(x), reverse=True)[0]
             #print("{} -> {} ".format(token, lw_token))
-            wv_index = wv_dict.get(lw_token, 0)
-            if wv_index != 0:
+            wv_index = wv_dict.get(lw_token, None)
+            if wv_index is not None:
                 vectors[i] = wv_arr[wv_index]
             else:
-                vectors[i] = wv_arr[0]
                 failed_token.append(token)
     if (len(failed_token) > 0):
-        print('failed tokens: ')
-        print(failed_token)
+        print('Num of failed tokens: ', len(failed_token))
+        #print(failed_token)
     return vectors
 
 URL = {
