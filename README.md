@@ -41,7 +41,7 @@ Currently the framework is only support test on validation set, to train with th
 
 ## Model Details
 
-I didn't fully test all the models I reimplement, sorry about that. And I didn't implement tfidf embedding of BAN model(though the current model has competitive results even without tfidf), only Glove Embedding is provided. About Intra- and Inter-modality Attention, Although I implement all the details provided by the paper, it still seems not as good as the paper reported, even after I discussed with auther and add some details.
+Note that I didn't implement tfidf embedding of BAN model (though the current model has competitive/almost the same performance even without tfidf), only Glove Embedding is provided. About Intra- and Inter-modality Attention, Although I implemented all the details provided by the paper, it still seems not as good as the paper reported, even after I discussed with auther and made some modifications.
 
 To Train [Counting Model][5]
 
