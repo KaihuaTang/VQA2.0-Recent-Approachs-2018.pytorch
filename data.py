@@ -3,6 +3,7 @@ import os
 import os.path
 import re
 
+import _pickle as cPickle
 from PIL import Image
 import h5py
 import torch
@@ -56,6 +57,8 @@ class VQA(data.Dataset):
         else:
             with open(config.vocabulary_path, 'r') as fd:
                 vocab_json = json.load(fd)
+            word2idx, idx2word = cPickle.load(open(config.glove_index, 'rb'))
+            vocab_json['question'] = word2idx
 
         self.question_ids = [q['question_id'] for q in questions_json['questions']]
 
@@ -91,7 +94,7 @@ class VQA(data.Dataset):
 
     @property
     def num_tokens(self):
-        return len(self.token_to_index) + 1  # add 1 for <unknown> token at index 0
+        return len(self.token_to_index)
 
     def _create_coco_id_to_index(self):
         """ Create a mapping from a COCO image id into the corresponding index into the h5 file """
@@ -124,11 +127,11 @@ class VQA(data.Dataset):
 
     def _encode_question(self, question):
         """ Turn a question into a vector of indices and a question length """
-        vec = torch.zeros(self.max_question_length).long()
+        vec = torch.zeros(self.max_question_length).long().fill_(self.num_tokens)
         for i, token in enumerate(question):
             if i >= self.max_question_length:
                 break
-            index = self.token_to_index.get(token, 0)
+            index = self.token_to_index.get(token, self.num_tokens - 1)
             vec[i] = index
         return vec, min(len(question), self.max_question_length)
 
@@ -154,8 +157,10 @@ class VQA(data.Dataset):
         index = self.coco_id_to_index[image_id]
         img = self.features_file['features'][index]
         boxes = self.features_file['boxes'][index]
+        widths = self.features_file['widths'][index]
+        heights = self.features_file['heights'][index]
         obj_mask = (img.sum(0) > 0).astype(int)
-        return torch.from_numpy(img), torch.from_numpy(boxes), torch.from_numpy(obj_mask)
+        return torch.from_numpy(img).transpose(0,1), torch.from_numpy(boxes).transpose(0,1), torch.from_numpy(obj_mask), widths, heights
 
     def __getitem__(self, item):
         if self.answerable_only:
@@ -168,10 +173,17 @@ class VQA(data.Dataset):
             # just return a dummy answer, it's not going to be used anyway
             a = 0
         image_id = self.coco_ids[item]
-        v, b, obj_mask = self._load_image(image_id)
+        v, b, obj_mask, width, height = self._load_image(image_id)
         # since batches are re-ordered for PackedSequence's, the original question order is lost
         # we return `item` so that the order of (v, q, a) triples can be restored if desired
         # without shuffling in the dataloader, these will be in the order that they appear in the q and a json's.
+        if config.normalize_box:
+            assert b.shape[1] == 4
+            b[:, 0] = b[:, 0] / float(width)
+            b[:, 1] = b[:, 1] / float(height)
+            b[:, 2] = b[:, 2] / float(width)
+            b[:, 3] = b[:, 3] / float(height)
+
         return v, q, a, b, item, obj_mask.float(), q_mask.float(), q_length
 
     def __len__(self):

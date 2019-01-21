@@ -10,6 +10,7 @@ import six
 import torch
 from six.moves.urllib.request import urlretrieve
 from tqdm import tqdm
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.init as init
@@ -20,37 +21,53 @@ import config
 from config import qa_path
 
 class TextProcessor(nn.Module):
-    def __init__(self, classes, embedding_features, lstm_features, drop=0.0, use_hidden=True):
+    def __init__(self, classes, embedding_features, lstm_features, drop=0.0, use_hidden=True, use_tanh=False, only_embed=False):
         super(TextProcessor, self).__init__()
-        self.use_hidden = use_hidden
+        self.use_hidden = use_hidden # return last layer hidden, else return all the outputs for each words
+        self.use_tanh = use_tanh
+        self.only_embed = only_embed
         classes = list(classes)
-        classes.insert(0, '__unknown__')
 
-        embed_vecs = obj_edge_vectors(classes, wv_dim=embedding_features)
-        self.embed = nn.Embedding(len(classes), embedding_features)
-        self.embed.weight.data = embed_vecs.clone()
+        self.embed = nn.Embedding(len(classes)+1, embedding_features, padding_idx=len(classes))
+        weight_init = torch.from_numpy(np.load(qa_path+'/glove6b_init_300d.npy'))
+        assert weight_init.shape == (len(classes), embedding_features)
+        print('glove weight shape: ', weight_init.shape)
+        self.embed.weight.data[:len(classes)] = weight_init
+        print('word embed shape: ', self.embed.weight.shape)
         
-        self.tanh = nn.Tanh()
         self.drop = nn.Dropout(drop)
-        self.lstm = nn.GRU(input_size=embedding_features,
+
+        if self.use_tanh:
+            self.tanh = nn.Tanh()
+
+        if not self.only_embed:
+            self.lstm = nn.GRU(input_size=embedding_features,
                            hidden_size=lstm_features,
                            num_layers=1,
                            batch_first=not use_hidden,)
 
     def forward(self, q, q_len):
         embedded = self.embed(q)
-        dropped = self.tanh(self.drop(embedded))
+        embedded = self.drop(embedded)
+
+        if self.use_tanh:
+            embedded = self.tanh(embedded)
+
+        if self.only_embed:
+            return embedded
+
         self.lstm.flatten_parameters()
         if self.use_hidden:
-            packed = pack_padded_sequence(dropped, q_len, batch_first=True)
+            packed = pack_padded_sequence(embedded, q_len, batch_first=True)
             _, hid = self.lstm(packed)
             return hid.squeeze(0)
         else:
-            out, _ = self.lstm(dropped)
+            out, _ = self.lstm(embedded)
             return out
 
 
-
+#embed_vecs = obj_edge_vectors(classes, wv_dim=embedding_features)
+#self.embed.weight.data = embed_vecs.clone()
 def obj_edge_vectors(names, wv_type='glove.6B', wv_dir=qa_path, wv_dim=300):
     wv_dict, wv_arr, wv_size = load_word_vectors(wv_dir, wv_type, wv_dim)
 

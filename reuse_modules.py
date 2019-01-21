@@ -21,18 +21,29 @@ class Fusion(nn.Module):
         return - (x - y)**2 + F.relu(x + y)
 
 class FCNet(nn.Module):
-    def __init__(self, in_size, out_size, relu=True, drop=0.0):
+    def __init__(self, in_size, out_size, activate=None, drop=0.0):
         super(FCNet, self).__init__()
-        self.use_relu = relu
-        self.drop_value = drop
         self.lin = weight_norm(nn.Linear(in_size, out_size), dim=None)
-        self.relu = nn.ReLU()
+
+        self.drop_value = drop
         self.drop = nn.Dropout(drop)
+
+        # in case of using upper character by mistake
+        self.activate = activate.lower() if (activate is not None) else None 
+        if activate == 'relu':
+            self.ac_fn = nn.ReLU()
+        elif activate == 'sigmoid':
+            self.ac_fn = nn.Sigmoid()
+        elif activate == 'tanh':
+            self.ac_fn = nn.Tanh()
+
 
     def forward(self, x):
         if self.drop_value > 0:
             x = self.drop(x)
+        
         x = self.lin(x)
-        if self.use_relu:
-            x = self.relu(x)
+        
+        if self.activate is not None:
+            x = self.ac_fn(x)
         return x

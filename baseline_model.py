@@ -45,12 +45,20 @@ class Net(nn.Module):
             drop=0.5,)
 
     def forward(self, v, b, q, v_mask, q_mask, q_len):
+        '''
+        v: visual feature      [batch, num_obj, 2048]
+        b: bounding box        [batch, num_obj, 4]
+        q: question            [batch, max_q_len]
+        v_mask: number of obj  [batch, max_obj]   1 is obj,  0 is none
+        q_mask: question length [batch, max_len]   1 is word, 0 is none
+        answer: predict logits [batch, config.max_answers]
+        '''
         q = self.text(q, list(q_len.data))  # [batch, 1024]
         if config.v_feat_norm: 
-            v = v / (v.norm(p=2, dim=1, keepdim=True) + 1e-12).expand_as(v) # [batch, 2048, 36]
+            v = v / (v.norm(p=2, dim=2, keepdim=True) + 1e-12).expand_as(v) # [batch, num_obj, 2048]
 
-        a = self.attention(v.transpose(1,2), q) # [batch, 36, num_glimpse]
-        v = apply_attention(v, a) # [batch, 2048 * num_glimpse]
+        a = self.attention(v, q) # [batch, 36, num_glimpse]
+        v = apply_attention(v.transpose(1,2), a) # [batch, 2048 * num_glimpse]
         answer = self.classifier(v, q)
 
         return answer
@@ -59,10 +67,10 @@ class Net(nn.Module):
 class Classifier(nn.Module):
     def __init__(self, in_features, mid_features, out_features, drop=0.0):
         super(Classifier, self).__init__()
-        self.lin11 = FCNet(in_features[0], mid_features)
-        self.lin12 = FCNet(in_features[1], mid_features)
-        self.lin2 = FCNet(mid_features, mid_features)
-        self.lin3 = FCNet(mid_features, out_features, relu=False, drop=drop)
+        self.lin11 = FCNet(in_features[0], mid_features, activate='relu')
+        self.lin12 = FCNet(in_features[1], mid_features, activate='relu')
+        self.lin2 = FCNet(mid_features, mid_features, activate='relu')
+        self.lin3 = FCNet(mid_features, out_features, drop=drop)
 
     def forward(self, v, q):
         #x = self.fusion(self.lin11(v), self.lin12(q))
@@ -74,9 +82,9 @@ class Classifier(nn.Module):
 class Attention(nn.Module):
     def __init__(self, v_features, q_features, mid_features, glimpses, drop=0.0):
         super(Attention, self).__init__()
-        self.lin_v = FCNet(v_features, mid_features)  # let self.lin take care of bias
-        self.lin_q = FCNet(q_features, mid_features)
-        self.lin = FCNet(mid_features, glimpses, relu=False, drop=drop)
+        self.lin_v = FCNet(v_features, mid_features, activate='relu')  # let self.lin take care of bias
+        self.lin_q = FCNet(q_features, mid_features, activate='relu')
+        self.lin = FCNet(mid_features, glimpses, drop=drop)
 
     def forward(self, v, q):
         """

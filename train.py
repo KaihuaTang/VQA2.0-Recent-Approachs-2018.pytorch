@@ -24,6 +24,10 @@ elif config.model_type == 'ban':
     import ban_model as model
 elif config.model_type == 'counting':
     import counting_model as model
+elif config.model_type == 'graph':
+    import graph_model as model
+elif config.model_type == 'my':
+    import my_model as model
 import utils
 
 def run(net, loader, optimizer, scheduler, tracker, train=False, has_answers=True, prefix='', epoch=0):
@@ -40,10 +44,10 @@ def run(net, loader, optimizer, scheduler, tracker, train=False, has_answers=Tru
         accs = []
 
     # set learning rate decay policy
-    if epoch < len(config.gradual_warmup_steps) and config.optim_method == 'Adamax':
+    if epoch < len(config.gradual_warmup_steps) and config.schedule_method == 'warm_up':
         utils.set_lr(optimizer, config.gradual_warmup_steps[epoch])
         utils.print_lr(optimizer, prefix, epoch)
-    elif (epoch in config.lr_decay_epochs) and train and config.optim_method == 'Adamax':
+    elif (epoch in config.lr_decay_epochs) and train and config.schedule_method == 'warm_up':
         utils.decay_lr(optimizer, config.lr_decay_rate)
         utils.print_lr(optimizer, prefix, epoch)
     else:
@@ -68,18 +72,19 @@ def run(net, loader, optimizer, scheduler, tracker, train=False, has_answers=Tru
         out = net(v, b, q, v_mask, q_mask, q_len)
         if has_answers:
             answer = utils.process_answer(a)
-            #nll = -F.log_softmax(out, dim=1)
-            #loss = (nll * answer).sum(dim=1).mean()   # this is worse than binary_cross_entropy_with_logits
-            loss = F.binary_cross_entropy_with_logits(out, answer) * config.max_answers
+            loss = utils.calculate_loss(answer, out, method=config.loss_method)
             acc = utils.batch_accuracy(out, answer).data.cpu()
 
         if train:
             optimizer.zero_grad()
             loss.backward()
+            # print gradient
+            if config.print_gradient: 
+                utils.print_grad([(n, p) for n, p in net.named_parameters() if p.grad is not None])
             # clip gradient
             clip_grad_norm_(net.parameters(), config.clip_value)
             optimizer.step()
-            if (config.optim_method == 'Adam'): 
+            if (config.schedule_method == 'batch_decay'): 
                 scheduler.step()
         else:
             # store information about evaluation of this minibatch
@@ -151,13 +156,13 @@ def main():
         val_loader = data.get_loader(test=True)
 
     net = model.Net(val_loader.dataset.vocab['question'].keys())
-    net = nn.DataParallel(net).cuda()
+    net = nn.DataParallel(net).cuda()  # Support multiple GPUS
     select_optim = optim.Adamax if (config.optim_method == 'Adamax') else optim.Adam
-    optimizer = select_optim([p for p in net.parameters() if p.requires_grad], lr=config.initial_lr)
+    optimizer = select_optim([p for p in net.parameters() if p.requires_grad], lr=config.initial_lr, weight_decay=config.weight_decay)
     scheduler = lr_scheduler.ExponentialLR(optimizer, 0.5**(1 / config.lr_halflife))
     if args.resume:
         net.module.load_state_dict(logs['weights'])
-
+    print(net)
     tracker = utils.Tracker()
     config_as_dict = {k: v for k, v in vars(config).items() if not k.startswith('__')}
 

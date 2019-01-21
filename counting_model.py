@@ -55,16 +55,18 @@ class Net(nn.Module):
                     m.bias.data.zero_()
 
     def forward(self, v, b, q, v_mask, q_mask, q_len):
-        """
-        input V: [batch, 2048, num_obj]
-        input B: [batch, 4, num_obj]
-        input Q: [batch, max_len]
-        input Q len: [batch]
-        """
+        '''
+        v: visual feature      [batch, num_obj, 2048]
+        b: bounding box        [batch, num_obj, 4]
+        q: question            [batch, max_q_len]
+        v_mask: number of obj  [batch, max_obj]   1 is obj,  0 is none
+        q_mask: question length [batch, max_len]   1 is word, 0 is none
+        answer: predict logits [batch, config.max_answers]
+        '''
         # question embedding
         q = self.text(q, list(q_len.data)) # [batch, 1024]
         # normalized visual feature
-        v = v.unsqueeze(2) # [batch, 2048, 1, num_obj]
+        v = v.transpose(1,2).unsqueeze(2) # [batch, 2048, 1, num_obj]
         v = v / (v.norm(p=2, dim=1, keepdim=True) + 1e-12).expand_as(v) # [batch, 2048, 1, num_obj]
         # attention
         a = self.attention(v, q) # [batch, num_glimpse, 1, num_obj]
@@ -74,7 +76,7 @@ class Net(nn.Module):
         # pick out the first attention map
         a1 = a[:, 0, :, :].contiguous().view(a.size(0), -1) # [batch, num_obj]
         # give it and the bounding boxes to the component
-        count = self.counter(b, a1) # [batch, 11]
+        count = self.counter(b.transpose(1,2), a1) # [batch, 11]
 
         answer = self.classifier(v, q, count) # [batch, 3000]
         return answer

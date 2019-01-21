@@ -3,6 +3,7 @@ import json
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torchvision.transforms as transforms
 
 import config
@@ -27,6 +28,25 @@ def batch_accuracy(logits, labels):
     
     return scores.sum(1)
 
+def calculate_loss(answer, pred, method):
+    """
+    answer = [batch, 3129]
+    pred = [batch, 3129]
+    """
+    if method == 'binary_cross_entropy_with_logits':
+        loss = F.binary_cross_entropy_with_logits(pred, answer) * config.max_answers
+    elif method == 'soft_cross_entropy':
+        nll = -F.log_softmax(pred, dim=1)
+        loss = (nll * answer).sum(dim=1).mean()   # this is worse than binary_cross_entropy_with_logits
+    elif method == 'KL_divergence':
+        pred = F.softmax(pred, dim=1)
+        kl = ((answer / (pred + 1e-12)) + 1e-12).log()
+        loss = (kl * answer).sum(1).mean()
+    elif method == 'multi_label_soft_margin':
+        loss = F.multilabel_soft_margin_loss(pred, answer)
+    else:
+        print('Error, pls define loss function')
+    return loss
 
 def path_for(train=False, val=False, test=False, question=False, answer=False):
     assert train + val + test == 1
@@ -63,6 +83,32 @@ def set_lr(optimizer, value):
 def decay_lr(optimizer, rate):
     for p in optimizer.param_groups:
         p['lr'] *= rate
+
+
+def print_grad(named_parameters):
+    """
+    visualize grad
+    """
+
+    total_norm = 0
+    param_to_norm = {}
+    param_to_shape = {}
+    for n, p in named_parameters:
+        if p.grad is not None:
+            param_norm = p.grad.data.norm(2)
+            total_norm += param_norm ** 2
+            param_to_norm[n] = param_norm
+            param_to_shape[n] = p.size()
+
+    total_norm = total_norm ** (1. / 2)
+
+    print('---Total norm {:.3f} -----------------'.format(total_norm))
+    for name, norm in sorted(param_to_norm.items(), key=lambda x: -x[1]):
+            print("{:<50s}: {:.3f}, ({})".format(name, norm, param_to_shape[name]))
+    print('-------------------------------', flush=True)
+
+    return total_norm
+
 
 class Tracker:
     """ Keep track of results over time, while having access to monitors to display information about them. """
