@@ -151,18 +151,18 @@ def main():
 
     if args.trainval:
         train_loader = data.get_loader(trainval=True)
-    if not args.eval_only:
+    elif not args.eval_only:
         train_loader = data.get_loader(train=True)
     
     if args.trainval:
-        # since we use the entire train val splits, we don't need val during training
-        pass
+        pass # since we use the entire train val splits, we don't need val during training
     elif not args.test:
         val_loader = data.get_loader(val=True)
     else:
         val_loader = data.get_loader(test=True)
-
-    net = model.Net(val_loader.dataset.vocab['question'].keys())
+    
+    question_keys = train_loader.dataset.vocab['question'].keys() if args.trainval else val_loader.dataset.vocab['question'].keys()
+    net = model.Net(question_keys)
     net = nn.DataParallel(net).cuda()  # Support multiple GPUS
     select_optim = optim.Adamax if (config.optim_method == 'Adamax') else optim.Adam
     optimizer = select_optim([p for p in net.parameters() if p.requires_grad], lr=config.initial_lr, weight_decay=config.weight_decay)
@@ -192,7 +192,7 @@ def main():
                     'accuracies': r[1],
                     'idx': r[2],
                 },
-                'vocab': val_loader.dataset.vocab,
+                'vocab': val_loader.dataset.vocab if not args.trainval else train_loader.dataset.vocab,
                 'src': src,
             }
             torch.save(results, target_name)
