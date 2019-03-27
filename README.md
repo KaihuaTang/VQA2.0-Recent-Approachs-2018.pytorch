@@ -36,8 +36,7 @@ python train.py [optional-name]
 - To evaluate accuracy (VQA accuracy and balanced pair accuracy) in various categories, you can run
 ```
 python eval-acc.py <path to .pth log> [<more paths to .pth logs> ...]
-```
-Currently the framework is only support test on validation set, to train with the full train&val split and get the test-std/test-val results, I will support it later. 
+``` 
 
 ## Support training whole trainval split and generate result.json file for you to upload to the vqa2.0 online evaluation server
 
