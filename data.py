@@ -18,19 +18,19 @@ import utils
 preloaded_vocab = None
 
 
-def get_loader(train=False, val=False, test=False):
+def get_loader(train=False, val=False, test=False, trainval=False):
     """ Returns a data loader for the desired split """
     split = VQA(
-        utils.path_for(train=train, val=val, test=test, question=True),
-        utils.path_for(train=train, val=val, test=test, answer=True),
+        utils.path_for(train=train, val=val, test=test, trainval=trainval, question=True),
+        utils.path_for(train=train, val=val, test=test, trainval=trainval, answer=True),
         config.preprocessed_trainval_path if not test else config.preprocessed_test_path,
-        answerable_only=train,
+        answerable_only=train or trainval,
         dummy_answers=test,
     )
     loader = torch.utils.data.DataLoader(
         split,
         batch_size=config.batch_size,
-        shuffle=train,  # only shuffle the data in training
+        shuffle=train or trainval,  # only shuffle the data in training
         pin_memory=True,
         num_workers=config.data_workers,
         collate_fn=collate_fn,

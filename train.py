@@ -117,6 +117,7 @@ def main():
     parser.add_argument('name', nargs='*')
     parser.add_argument('--eval', dest='eval_only', action='store_true')
     parser.add_argument('--test', action='store_true')
+    parser.add_argument('--trainval', action='store_true')
     parser.add_argument('--resume', nargs='*')
     parser.add_argument('--describe', type=str, default='describe your setting')
     args = parser.parse_args()
@@ -148,9 +149,15 @@ def main():
 
     cudnn.benchmark = True
 
+    if args.trainval:
+        train_loader = data.get_loader(trainval=True)
     if not args.eval_only:
         train_loader = data.get_loader(train=True)
-    if not args.test:
+    
+    if args.trainval:
+        # since we use the entire train val splits, we don't need val during training
+        pass
+    elif not args.test:
         val_loader = data.get_loader(val=True)
     else:
         val_loader = data.get_loader(test=True)
@@ -169,7 +176,10 @@ def main():
     for i in range(config.epochs):
         if not args.eval_only:
             run(net, train_loader, optimizer, scheduler, tracker, train=True, prefix='train', epoch=i)
-        r = run(net, val_loader, optimizer, scheduler, tracker, train=False, prefix='val', epoch=i, has_answers=not args.test)
+        if not args.trainval:
+            r = run(net, val_loader, optimizer, scheduler, tracker, train=False, prefix='val', epoch=i, has_answers=not args.test)
+        else:
+            r = [[-1], [-1], [-1]]  # dummy results
         
         if not args.test:
             results = {
@@ -198,7 +208,7 @@ def main():
                     'answer': answer,
                 }
                 results.append(entry)
-            with open('results.json', 'w') as fd:
+            with open(config.result_json_path, 'w') as fd:
                 json.dump(results, fd)
 
         if args.eval_only:

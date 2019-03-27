@@ -37,7 +37,20 @@ python train.py [optional-name]
 ```
 python eval-acc.py <path to .pth log> [<more paths to .pth logs> ...]
 ```
-Currently the framework is only support test on validation set, to train with the full train&val splite and get the test-std/test-val results, I will support it later. 
+Currently the framework is only support test on validation set, to train with the full train&val split and get the test-std/test-val results, I will support it later. 
+
+## Support training whole trainval split and generate result.json file for you to upload to the vqa2.0 online evaluation server
+
+- First, I merge the question and annotation json for train and validation splits. You can download [trainval_annotation.json][7] and [trainval_question.json][8] from the links, and put them into ./data/ directory
+- To train your model using the entire train & val sets, simply type the --trainval option during your training
+```
+python train.py --trainval
+```
+- To generate result.json file for you to upload to the vqa2.0 online evaluation server, you need to resume from the previous model trained from trainval split and select test. The generated result.json will be put into config.result_json_path
+```
+python train.py --test --resume=./logs/YOUR_MODEL.pth
+```
+- One More Thing: note that most of the methods require different learning rates when they train through the entire train&val splits. Usually, it's small than the learning rate that used to train on single train split.
 
 ## Model Details
 
@@ -80,3 +93,5 @@ Though this method seem less competitive.
 [4]: https://arxiv.org/abs/1812.05252
 [5]: https://arxiv.org/abs/1802.05766
 [6]: https://arxiv.org/abs/1806.07243
+[7]: https://onedrive.live.com/embed?cid=22376FFAD72C4B64&resid=22376FFAD72C4B64%21768236&authkey=AHGPar-chbF0PuI
+[8]: https://onedrive.live.com/embed?cid=22376FFAD72C4B64&resid=22376FFAD72C4B64%21768235&authkey=AJTII83FKtUN258

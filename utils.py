@@ -48,14 +48,16 @@ def calculate_loss(answer, pred, method):
         print('Error, pls define loss function')
     return loss
 
-def path_for(train=False, val=False, test=False, question=False, answer=False):
-    assert train + val + test == 1
+def path_for(train=False, val=False, test=False, question=False, trainval=False answer=False):
+    assert train + val + test + trainval == 1
     assert question + answer == 1
 
     if train:
         split = 'train2014'
     elif val:
         split = 'val2014'
+    elif trainval:
+        split = 'trainval2014'
     else:
         split = config.test_split
 

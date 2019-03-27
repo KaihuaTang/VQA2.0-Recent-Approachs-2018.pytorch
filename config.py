@@ -6,11 +6,12 @@ preprocessed_trainval_path = 'genome-trainval.h5'  # path where preprocessed fea
 preprocessed_test_path = 'genome-test.h5'  # path where preprocessed features from the test split are saved to and loaded from
 vocabulary_path = 'vocab.json'  # path where the used vocabularies for question and answers are saved to
 glove_index = 'data/dictionary.pkl'
+result_json_path = 'results.json'  # the path to save the test json that can be uploaded to vqa2.0 online evaluation server
 
 task = 'OpenEnded'
 dataset = 'mscoco'
 
-test_split = 'test2015'  # either 'test-dev2015' or 'test2015'
+test_split = 'test2015'  # always 'test2015' since from 2018, vqa online evaluation server requires to upload entire test2015 result even for test-dev split
 
 # preprocess config
 output_size = 100  # max number of object proposals per image
@@ -36,8 +37,8 @@ normalize_box = False
 seed = 5225
 weight_decay = 0.0
 
-#model_type = 'baseline'           # "Bottom-up top-down"
-model_type = 'inter_intra'       # "Intra- and Inter-modality Attention" 
+model_type = 'baseline'           # "Bottom-up top-down"
+#model_type = 'inter_intra'       # "Intra- and Inter-modality Attention" 
 #model_type = 'ban'               # "Bilinear Attention Network"
 #model_type = 'counting'          # "Learning to count objects"
 #model_type = 'graph'             # "Learning Conditioned Graph Structures for Interpretable Visual Question Answering"
