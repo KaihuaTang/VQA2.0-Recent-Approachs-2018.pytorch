@@ -87,12 +87,14 @@ Though this method seem less competitive.
 
 # Looking for previous methods to compare in your experiments
 Please refer to my CVPR 2019 oral paper:
+```
 @inproceedings{tang2018learning,
   title={Learning to Compose Dynamic Tree Structures for Visual Contexts},
   author={Tang, Kaihua and Zhang, Hanwang and Wu, Baoyuan and Luo, Wenhan and Liu, Wei},
   booktitle= "Conference on Computer Vision and Pattern Recognition",
   year={2019}
 }
+```
 
 [0]: https://github.com/Cyanogenoid/vqa-counting
 [1]: https://github.com/hengyuan-hu/bottom-up-attention-vqa
