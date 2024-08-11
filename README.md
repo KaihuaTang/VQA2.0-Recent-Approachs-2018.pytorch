@@ -9,6 +9,9 @@ The project is based on [Cyanogenoid/vqa-counting][0]. Most of the current VQA2.
 
 One of the benefit of our framework is that you can easily add counting module into your own model, which is proved to be effictive in imporving counting questions without harm the performance of your own model. 
 
+**If my open source projects have inspired you, giving me some sponsorship will be a great help to my subsequent open source work.** 
+[Support my subsequent open source work❤️🙏](https://kaihuatang.github.io/donate.html)
+
 ## Dependencies
 
 - Python 3.6
